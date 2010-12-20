@@ -1,0 +1,9 @@
+Written and maintained by Michael Phillips.
+
+http://github.com/Nomad145/Minecraft-Server-BASH-Plugins
+
+A series of plugins written in BASH for the Minecraft Server.
+Plugins are used in conjunction with hardG's Minecraft Server init script found here.
+http://www.reddit.com/r/Minecraft/comments/drfx8/hey_linux_minecraft_server_admins_dae_use_a_fifo/
+
+The intent of the plugins is to give non-op players limited access to op commands such as Teleport, List, and Give.  Which commands the Administrator wishes to give his players is completely up to him, but this eliminates some of the need to have an OP in the server at any given point in time to do special things.
