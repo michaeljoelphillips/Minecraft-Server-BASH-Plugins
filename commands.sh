@@ -67,6 +67,7 @@ while x=1; do
 						echo "tell $TESTPLAYER There are no players online with that name." > $CONSOLE_IN
 					fi
 				fi
+			;;
 			help)
 				echo "tell $TESTPLAYER Usage: server[colon] [command]" > $CONSOLE_IN
 				echo "tell $TESTPLAYER Commands: teleport, list, vote_kick, help" > $CONSOLE_IN
