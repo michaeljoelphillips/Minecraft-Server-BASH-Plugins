@@ -6,6 +6,10 @@ CONSOLE_IN="/opt/MinecraftServer/console.in"
 MODS_ENABLED="/opt/MinecraftServer/scripts/mods.enabled"
 VOTE_LIST="/opt/MinecraftServer/scripts/vote.list"
 VOTE_LIST_NEW="/opt/MinecraftServer/scripts/vote.list.new"
+START_VOTE="/opt/MinecraftServer/scripts/startvote.sh"
+PLAYER_KICK="/opt/MinecraftServer/scripts/player.kick"
+BALLOT_IN_PROGRESS="$(cat /opt/MinecraftServer/scripts/ballot)"
+
 x=0
 
 if [ ! -e $SERVERLOG ]; then
@@ -49,49 +53,27 @@ while x=1; do
 				CURRENT_PLAYERS=''
 			;;
 			vote_kick)
-				if [ ! $COMMAND_PARAMETERS ]; then
-					echo "tell $TESTPLAYER Please select a player to kick." # > $CONSOLE_IN
+				if [ ! $COMMAND_PARAMETERS ]; then #No Player Specified
+					echo "tell $TESTPLAYER Syntax: server[colon] vote_kick [player]" > $CONSOLE_IN
 				else
-					# Find the number of votes we need.
-					for line in $(cat $PLAYERSLIST); do
-						TOTAL_PLAYERS=$(expr $TOTAL_PLAYERS + 1)
-					done
-					MINIMUM_VOTES=$(echo "$TOTAL_PLAYERS - ($TOTAL_PLAYERS/2)" | bc)
-
-					if [ "$(grep $COMMAND_PARAMETERS $PLAYERSLIST)" ]; then
-						# Player Exists!  Execute vote_kick
-						# Check to see if we are already voting on player
-						if [ "$(grep $COMMAND_PARAMETERS $VOTE_LIST)" != "" ]; then
-							# Voting started, but player has been voted!  Increment votes by one.
-							#grep $PLAYERSLIST $COMMAND_PARAMETERS | awk '{print $2}'
-							# Increment Vote count by one for the player
-							grep $COMMAND_PARAMETERS $VOTE_LIST | awk '{n=$NF+1; gsub(/[0-9]+/,n, $2); print}' < $VOTE_LIST > $VOTE_LIST_NEW
-							# Push the changes
-							mv vote.list.new vote.list
-							PLAYER_VOTES=$(grep $COMMAND_PARAMETERS $VOTE_LIST | awk '{print $2}')
-							VOTES_TO_KICK=$(expr $MINIMUM_VOTES - $PLAYER_VOTES)
-							echo $MINIMUM_VOTES
-							echo $PLAYER_VOTES
-							echo $VOTES_TO_KICK
-							sleep 10
-							
-							if [ $VOTES_TO_KICK = 0 ]; then
-								echo "say $COMMAND_PARAMETERS Has received $PLAYER_VOTES total votes and will now be kicked!" > $CONSOLE_IN
-								echo "kick $COMMAND_PARAMETERS" > $CONSOLE_IN
-							else
-								echo "tell $TESTPLAYER Your vote has been cast!" > $CONSOLE_IN
-								echo "say $VOTES_TO_KICK more votes needed to kick $COMMAND_PARAMETER" > $CONSOLE_IN
-							fi
-								
-						else
-							# Adding Player to VOTE_LIST with 1 vote!
-							echo "$COMMAND_PARAMETERS 1" >> $VOTE_LIST
-							echo "1 Vote Against $COMMAND_PARAMETERS." > $CONSOLE_IN
-							echo $MINIMUM_VOTES
-							#echo "$(expr $MINIMUM_VOTES - 1) more votes needed to kick." > $CONSOLE_IN
-						fi
+					if [ $BALLOT_IN_PROGRESS = "false" ]; then #We are not voting.
+						# Voting not started.  Initializing vote process.
+						echo "say $TESTPLAYER is voting to kick $COMMAND_PARAMETERS" > $CONSOLE_IN
+						echo "say You have 1 minute to cast your vote." > $CONSOLE_IN
+						PLAYER_TO_KICK="$COMMAND_PARAMETERS"
+						# Send the PLAYER_TO_KICK variable to a file for the fork.
+						echo $PLAYER_TO_KICK > $PLAYER_KICK
+						echo $TESTPLAYER >> $VOTE_LIST
+						sh $START_VOTE &
+						BALLOT_IN_PROGRESS="true"
 					else
-						echo "tell $TESTPLAYER There are no players online with that name." > $CONSOLE_IN
+						# Voting already started.  Who are we voting on?
+						if [ $COMMAND_PARAMETERS = $PLAYER_TO_KICK ]; then
+							echo "tell $TESTPLAYER Your vote has been cast." > $CONSOLE_IN
+							echo $TESTPLAYER >> $VOTE_LIST
+						else
+							echo "tell $TESTPLAYER Voting has already started.  Wait until voting closes and try again." > $CONSOLE_IN
+						fi
 					fi
 				fi
 			;;
