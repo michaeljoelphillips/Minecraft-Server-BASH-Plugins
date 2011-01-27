@@ -10,7 +10,7 @@ while x=1; do
 	sleep 1s
 	if [ $TESTPLAYER ]; then
 		if [ "$(grep $TESTPLAYER $PLAYERSLIST)" != $TESTPLAYER ]; then
-			echo $TESTPLAYER >> $PLAYERSLIST
+			echo "$TESTPLAYER" >> $PLAYERSLIST
 			echo "tell $TESTPLAYER Welcome to Minecraft!" >> $CONSOLE_IN
 		fi
 	fi
